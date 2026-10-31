@@ -1,0 +1,17 @@
+# Build: docker build -f deploy/Dockerfile -t agent-board:<version> --build-arg VERSION=<version> .
+FROM golang:1.27.1-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+ARG VERSION=dev
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/agent-board ./cmd/agent-board
+
+# distroless static ships ca-certificates and tzdata, no shell.
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
+COPY --from=build /out/agent-board /agent-board
+USER 568:568
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD ["/agent-board", "healthcheck"]
+ENTRYPOINT ["/agent-board"]
+CMD ["serve"]

@@ -1,0 +1,47 @@
+# Example Compose definition. Copy it next to a .env file and adjust:
+#   AGENT_BOARD_APPDATA       host folder holding data/, backups/, exports/ (owned by uid 568)
+#   AGENT_BOARD_PROXY_NETWORK existing Docker network shared with your TLS reverse proxy
+#   AGENT_BOARD_TZ            IANA zone for the daily backup time
+# No host ports are published. Point the proxy at agent-board:8080 on the shared network.
+services:
+  agent-board:
+    image: agent-board:0.3.1
+    pull_policy: never
+    container_name: agent-board
+    restart: unless-stopped
+    user: '568:568'
+    environment:
+      AGENT_BOARD_DATA_DIR: /srv/agent-board/data
+      AGENT_BOARD_BACKUP_DIR: /srv/agent-board/backups
+      AGENT_BOARD_LISTEN: 0.0.0.0:8080
+      AGENT_BOARD_ADMIN_LISTEN: 127.0.0.1:8081
+      AGENT_BOARD_BACKUP_TIME: '00:30'
+      AGENT_BOARD_TZ: '${AGENT_BOARD_TZ:-UTC}'
+      AGENT_BOARD_LOG_LEVEL: info
+      AGENT_BOARD_WEB_PRINCIPAL_ID: '${AGENT_BOARD_WEB_PRINCIPAL_ID:-}'
+      AGENT_BOARD_WEB_ORIGIN: '${AGENT_BOARD_WEB_ORIGIN:-}'
+    volumes:
+    - ${AGENT_BOARD_APPDATA:-./appdata}/data:/srv/agent-board/data
+    - ${AGENT_BOARD_APPDATA:-./appdata}/backups:/srv/agent-board/backups
+    - ${AGENT_BOARD_APPDATA:-./appdata}/exports:/srv/agent-board/exports
+    networks:
+    - proxy
+    mem_limit: 512m
+    healthcheck:
+      test:
+      - CMD
+      - /agent-board
+      - healthcheck
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+networks:
+  proxy:
+    external: true
+    name: ${AGENT_BOARD_PROXY_NETWORK:-proxy}

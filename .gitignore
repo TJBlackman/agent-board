@@ -1,0 +1,10 @@
+bin/
+dist/
+data/
+*.db
+*.db-wal
+*.db-shm
+spike/*/go.sum
+.env
+.env.*
+!.env.example
