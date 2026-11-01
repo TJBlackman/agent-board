@@ -5,7 +5,7 @@
 # No host ports are published. Point the proxy at agent-board:8080 on the shared network.
 services:
   agent-board:
-    image: agent-board:0.3.1
+    image: agent-board:0.3.2
     pull_policy: never
     container_name: agent-board
     restart: unless-stopped

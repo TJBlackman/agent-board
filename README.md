@@ -30,10 +30,10 @@ The image is a static binary on distroless, runs as uid 568, has no shell, and l
 Build from the repository root:
 
 ```bash
-docker build -f deploy/Dockerfile --build-arg VERSION=0.3.1 -t agent-board:0.3.1 .
+docker build -f deploy/Dockerfile --build-arg VERSION=0.3.2 -t agent-board:0.3.2 .
 ```
 
-`make image VERSION=0.3.1` runs the same command.
+`make image VERSION=0.3.2` runs the same command.
 
 Run it. The data and backup folders must be writable by uid 568. The read only root filesystem, dropped capabilities, and `no-new-privileges` are what the Compose file uses too; the service needs nothing outside its two volumes and `/tmp`.
 
@@ -49,7 +49,7 @@ docker run -d --name agent-board --restart unless-stopped \
   -e AGENT_BOARD_LISTEN=0.0.0.0:8080 \
   -e AGENT_BOARD_BACKUP_TIME=00:30 \
   -p 127.0.0.1:8080:8080 \
-  agent-board:0.3.1
+  agent-board:0.3.2
 
 curl -s http://127.0.0.1:8080/healthz
 ```
