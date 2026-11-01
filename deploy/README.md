@@ -38,7 +38,7 @@ Restore from a backup directory `backups/<stamp>/`:
 
 Rollback of a bad image: put the previous `image:` tag back and redeploy. Data files are forward compatible only within the same schema version. Take and verify a backup before any release that migrates the schema, and keep the previous Compose file and image.
 
-Schema history: 0.1.x and 0.2.0 use schema 1. 0.3.0 and later use schema 2, which adds retention timestamps. A 0.2.0 binary cannot open a schema 2 database, so rolling back across that line means restoring a schema 1 backup while stopped, running `restore-prep` with the **0.2.0 image**, and issuing fresh credentials.
+Schema history: 0.1.x and 0.2.0 use schema 1. 0.3.0 and later use schema 2, which adds retention timestamps. 0.3.2 changes no schema: it adds the loopback check on the admin listener, the hardened Compose settings, and the nosniff header. A 0.2.0 binary cannot open a schema 2 database, so rolling back across that line means restoring a schema 1 backup while stopped, running `restore-prep` with the **0.2.0 image**, and issuing fresh credentials.
 
 Personal view: set `AGENT_BOARD_WEB_PRINCIPAL_ID` and `AGENT_BOARD_WEB_ORIGIN` in the deployment `.env`. Neither is a credential. See `docs/operations.md`.
 
