@@ -1,6 +1,8 @@
 # Deploying agent-board in a container
 
-The image is a static Go binary on distroless, running as uid 568. It listens on `:8080` for the public API and on `127.0.0.1:8081` inside the container for operator commands. Only the container itself can reach the operator listener.
+The image is a static Go binary on distroless, running as uid 568. It listens on `:8080` for the public API and on `127.0.0.1:8081` inside the container for operator commands. Only the container itself can reach the operator listener. The operator listener has no authentication of its own, so the server refuses to start when `AGENT_BOARD_ADMIN_LISTEN` is anything but a loopback address.
+
+The Compose file runs the container with a read only root filesystem, a tmpfs at `/tmp`, every Linux capability dropped, and `no-new-privileges`. The service writes only to its `data`, `backups`, and `exports` volumes, so keep those settings when you adapt the file.
 
 Layout of the host folder (`AGENT_BOARD_APPDATA` in `docker-compose.yml`), owned by uid 568:
 

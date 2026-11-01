@@ -342,7 +342,7 @@ func (s *Server) authorizeWeb(w http.ResponseWriter, r *http.Request) (webSessio
 			return v, false
 		}
 		u := &url.URL{Path: "/ui/login", RawQuery: url.Values{"next": {safeWebReturn(r.URL.RequestURI())}}.Encode()}
-		http.Redirect(w, r, u.String(), 303)
+		http.Redirect(w, r, u.String(), http.StatusSeeOther)
 		return v, false
 	}
 	return v, true
@@ -375,7 +375,7 @@ func (s *Server) webLoginForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ok {
-		http.Redirect(w, r, safeWebReturn(q.str("next")), 303)
+		http.Redirect(w, r, safeWebReturn(q.str("next")), http.StatusSeeOther)
 		return
 	}
 	if !s.cfg.DisableRateLimits && !s.limiter.allow("web-pre", "write") {
@@ -476,7 +476,7 @@ func (s *Server) webLogin(w http.ResponseWriter, r *http.Request) {
 	s.web.sessions.remove(false, s.cookieID(r, false))
 	s.setWebCookie(w, true, "", time.Time{})
 	s.setWebCookie(w, false, id, v.Expires)
-	http.Redirect(w, r, safeWebReturn(f.Get("next")), 303)
+	http.Redirect(w, r, safeWebReturn(f.Get("next")), http.StatusSeeOther)
 }
 
 func (s *Server) webLogout(w http.ResponseWriter, r *http.Request) {
@@ -492,7 +492,7 @@ func (s *Server) webLogout(w http.ResponseWriter, r *http.Request) {
 	}
 	s.web.sessions.remove(false, s.cookieID(r, false))
 	s.setWebCookie(w, false, "", time.Time{})
-	http.Redirect(w, r, "/ui/login", 303)
+	http.Redirect(w, r, "/ui/login", http.StatusSeeOther)
 }
 
 func webParams(r *http.Request, allowed ...string) (*params, *apiError) {

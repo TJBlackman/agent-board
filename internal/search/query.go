@@ -106,11 +106,9 @@ func Compile(terms []Term) string {
 func Words(terms []Term) []string {
 	var out []string
 	for _, t := range terms {
-		for _, w := range strings.FieldsFunc(strings.ToLower(t.Text), func(r rune) bool {
+		out = append(out, strings.FieldsFunc(strings.ToLower(t.Text), func(r rune) bool {
 			return !(unicode.IsLetter(r) || unicode.IsDigit(r))
-		}) {
-			out = append(out, w)
-		}
+		})...)
 	}
 	return out
 }

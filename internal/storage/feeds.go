@@ -3,11 +3,9 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
-	"time"
 
 	"trevorblackman.dev/agent-board/internal/domain"
 	"trevorblackman.dev/agent-board/internal/pagination"
@@ -171,9 +169,8 @@ ORDER BY a.act_seq DESC, a.seq DESC LIMIT ?`, args...)
 		return nil, err
 	}
 	type row struct {
-		seq    int64
-		card   Card
-		actSeq int64
+		seq  int64
+		card Card
 	}
 	var out []row
 	for rows.Next() {
@@ -265,6 +262,3 @@ func tagsForPosts(ctx context.Context, q Querier, seqs []int64) (map[int64][]str
 	}
 	return out, rows.Err()
 }
-
-var _ = fmt.Sprintf
-var _ = time.Now

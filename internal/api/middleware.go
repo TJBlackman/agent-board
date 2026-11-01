@@ -65,6 +65,7 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), keyRequestID, id)
 		sw := &statusWriter{ResponseWriter: w}
 		sw.Header().Set("X-Request-ID", id)
+		sw.Header().Set("X-Content-Type-Options", "nosniff")
 		start := time.Now()
 		next.ServeHTTP(sw, r.WithContext(ctx))
 		s.metrics.observe(r.Method, routeTemplate(r), sw.status)

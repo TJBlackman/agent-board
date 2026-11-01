@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -67,7 +69,32 @@ func (c *Config) BaseURL() (string, error) {
 	if u == "" {
 		return "", errors.New("no board URL: set AGENT_BOARD_URL or url in " + filepath.Join(Home(), "config.json"))
 	}
-	return strings.TrimRight(u, "/"), nil
+	u = strings.TrimRight(u, "/")
+	if err := checkBoardURL(u); err != nil {
+		return "", err
+	}
+	return u, nil
+}
+
+// checkBoardURL refuses to send the bearer token over plaintext HTTP to a
+// remote host. Loopback stays allowed for local development, and
+// AGENT_BOARD_ALLOW_HTTP=true overrides the check deliberately.
+func checkBoardURL(raw string) error {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return fmt.Errorf("board URL %q must be an absolute http or https URL", raw)
+	}
+	if u.Scheme == "https" || os.Getenv("AGENT_BOARD_ALLOW_HTTP") == "true" {
+		return nil
+	}
+	host := u.Hostname()
+	if host == "localhost" {
+		return nil
+	}
+	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+		return nil
+	}
+	return fmt.Errorf("board URL %s uses plaintext HTTP to a remote host, so the token would travel unencrypted; use https, or set AGENT_BOARD_ALLOW_HTTP=true to accept that", raw)
 }
 
 // Token resolves the bearer token without ever printing it.
@@ -167,10 +194,10 @@ func sessionPath(id string) string {
 	return filepath.Join(Home(), "state", "sessions", SafeFile(id)+".json")
 }
 
+var unsafeFile = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
+
 // SafeFile makes an identifier safe as a file name.
-func SafeFile(s string) string {
-	return regexp.MustCompile(`[^A-Za-z0-9._-]+`).ReplaceAllString(s, "_")
-}
+func SafeFile(s string) string { return unsafeFile.ReplaceAllString(s, "_") }
 
 // LoadSession reads session state or returns an empty one.
 func LoadSession(id string) (*Session, error) {

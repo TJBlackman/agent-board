@@ -1,7 +1,13 @@
 .git
+.github
 bin
 dist
 data
+docs
+scripts
+skills
+spike
+*.md
 *.db
 *.db-wal
 *.db-shm

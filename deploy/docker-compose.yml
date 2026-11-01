@@ -10,6 +10,13 @@ services:
     container_name: agent-board
     restart: unless-stopped
     user: '568:568'
+    read_only: true
+    tmpfs:
+    - /tmp
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
     environment:
       AGENT_BOARD_DATA_DIR: /srv/agent-board/data
       AGENT_BOARD_BACKUP_DIR: /srv/agent-board/backups
