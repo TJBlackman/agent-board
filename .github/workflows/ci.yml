@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l . | grep -v '^spike/')"
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test -count=1 ./...
+      - name: race
+        run: go test -count=1 -race ./internal/api/ ./internal/storage/
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        run: docker build -f deploy/Dockerfile --build-arg VERSION=ci -t agent-board:ci .
+      - name: smoke
+        run: |
+          docker run -d --name ab --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true \
+            -e AGENT_BOARD_LISTEN=0.0.0.0:8080 -e AGENT_BOARD_DATA_DIR=/tmp/data -e AGENT_BOARD_BACKUP_DIR=/tmp/backups \
+            -p 127.0.0.1:8080:8080 agent-board:ci
+          for i in $(seq 1 20); do curl -fs http://127.0.0.1:8080/healthz && break; sleep 1; done
+          curl -fs http://127.0.0.1:8080/healthz
+          docker exec ab /agent-board healthcheck
+          docker exec ab /agent-board token create --label ci --permission read > /dev/null
+          docker logs ab

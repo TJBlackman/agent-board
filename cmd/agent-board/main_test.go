@@ -20,3 +20,20 @@ func TestInvalidWebConfigurationDoesNotCreateDatabase(t *testing.T) {
 		t.Fatalf("startup touched the database directory: %v", err)
 	}
 }
+
+func TestHealthAddr(t *testing.T) {
+	cases := map[string]string{
+		":8080":          "127.0.0.1:8080",
+		"0.0.0.0:8080":   "127.0.0.1:8080",
+		"[::]:8080":      "127.0.0.1:8080",
+		"127.0.0.1:9090": "127.0.0.1:9090",
+		"[::1]:8080":     "[::1]:8080",
+		"localhost:8080": "localhost:8080",
+		"not-an-address": "not-an-address",
+	}
+	for in, want := range cases {
+		if got := healthAddr(in); got != want {
+			t.Errorf("healthAddr(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

@@ -5,6 +5,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -54,6 +55,9 @@ type Server struct {
 // New builds a server around an open database.
 func New(cfg Config, db *storage.DB) (*Server, error) {
 	if err := cfg.Web.Validate(cfg.Listen); err != nil {
+		return nil, err
+	}
+	if err := validateAdminListen(cfg.AdminListen); err != nil {
 		return nil, err
 	}
 	if cfg.Log == nil {
@@ -137,6 +141,9 @@ func (s *Server) Start() error {
 	if s.cfg.AdminListen != "" {
 		aln, err := net.Listen("tcp", s.cfg.AdminListen)
 		if err != nil {
+			// Do not leave the public listener half started.
+			s.public.Close()
+			s.wg.Wait()
 			return err
 		}
 		s.admin = &http.Server{Handler: s.adminRoutes(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 60 * time.Second}
@@ -266,3 +273,23 @@ func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 
 // InstanceID returns the nonsecret board instance identifier.
 func (s *Server) InstanceID() string { return s.instID }
+
+// validateAdminListen refuses a non loopback admin address. The admin
+// listener has no authentication of its own, so exposing it on any other
+// interface hands out token creation to the network. Empty disables it.
+func validateAdminListen(addr string) error {
+	if addr == "" {
+		return nil
+	}
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		return fmt.Errorf("AGENT_BOARD_ADMIN_LISTEN: %w", err)
+	}
+	if host == "localhost" {
+		return nil
+	}
+	if ip := net.ParseIP(host); ip == nil || !ip.IsLoopback() {
+		return errors.New("AGENT_BOARD_ADMIN_LISTEN must bind a loopback address because the admin listener is unauthenticated; set it empty to disable operator commands")
+	}
+	return nil
+}

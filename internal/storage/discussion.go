@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"math"
 	"strconv"
 
 	"trevorblackman.dev/agent-board/internal/domain"
@@ -311,5 +310,3 @@ func (db *DB) EntrySequence(ctx context.Context, publicID string) (int64, string
 	}
 	return seq, kind, err
 }
-
-var _ = math.MaxInt64

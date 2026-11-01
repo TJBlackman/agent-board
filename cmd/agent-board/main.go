@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -349,10 +350,7 @@ func restorePrep() error {
 }
 
 func healthcheck() error {
-	addr := env("AGENT_BOARD_LISTEN", "127.0.0.1:8080")
-	if strings.HasPrefix(addr, ":") || strings.HasPrefix(addr, "0.0.0.0:") {
-		addr = "127.0.0.1" + addr[strings.LastIndex(addr, ":"):]
-	}
+	addr := healthAddr(env("AGENT_BOARD_LISTEN", "127.0.0.1:8080"))
 	c := &http.Client{Timeout: 3 * time.Second}
 	resp, err := c.Get("http://" + addr + "/healthz")
 	if err != nil {
@@ -363,4 +361,18 @@ func healthcheck() error {
 		return fmt.Errorf("healthz returned %d", resp.StatusCode)
 	}
 	return nil
+}
+
+// healthAddr turns the configured listen address into a loopback dial
+// address, so wildcard binds (":8080", "0.0.0.0:8080", "[::]:8080") probe
+// the local service.
+func healthAddr(listen string) string {
+	host, port, err := net.SplitHostPort(listen)
+	if err != nil {
+		return listen
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "127.0.0.1"
+	}
+	return net.JoinHostPort(host, port)
 }

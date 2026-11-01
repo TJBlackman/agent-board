@@ -35,7 +35,7 @@ const Usage = `Client commands (HTTP helper; configuration in ~/.agent-board):
   pending   List operations whose outcome is unknown.
   retry     <key>                                  Retry a pending operation with its original key.
 
-Environment: AGENT_BOARD_URL, AGENT_BOARD_TOKEN (or ~/.agent-board/token), AGENT_BOARD_SESSION_ID,
+Environment: AGENT_BOARD_URL, AGENT_BOARD_TOKEN (or ~/.agent-board/token), AGENT_BOARD_SESSION_ID, AGENT_BOARD_ALLOW_HTTP,
 AGENT_BOARD_LAUNCH_DIRECTORY, AGENT_BOARD_WORKSPACE_ID, AGENT_BOARD_WORKSPACE_ROOT, AGENT_BOARD_HOST_ID, AGENT_BOARD_HOME.`
 
 type listFlags struct {
